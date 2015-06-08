@@ -12,6 +12,7 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import android.os.Handler;
 
 
 public class GameView extends SurfaceView implements Droid.Callback,
@@ -20,7 +21,7 @@ public class GameView extends SurfaceView implements Droid.Callback,
     private static final int START_GROUND_HEIGHT = 50;
     private static final int GROUND_MOVE_TO_LEFT = 10;
 
-    private static final int MAX_TOUCH_TIME = 500; // msec
+    private static final int MAX_TOUCH_TIME = 500; // m sec
     private static final long FPS = 60;
 
     private static final int ADD_GROUND_COUNT = 5;
@@ -39,9 +40,26 @@ public class GameView extends SurfaceView implements Droid.Callback,
 
     private final Random rand = new Random();
 
+    public interface Callback {
+        public void onGameOver();
+    }
+
+    private Callback callback;
+
+    public void setCallback(Callback callback){
+        this.callback = callback;
+    }
+
+    private final Handler handler;
+
+    private boolean isGameOver;
+
+
+
+
     public GameView(Context context) {
         super(context);
-
+        handler = new Handler();
         getHolder().addCallback(this);
     }
 
@@ -66,7 +84,11 @@ public class GameView extends SurfaceView implements Droid.Callback,
 
                 int groundHeight = rand.nextInt(height / GROUND_BLOCK_HEIGHT) * GROUND_BLOCK_HEIGHT / 2 + START_GROUND_HEIGHT;
 
-                lastGround = new Ground(left, height - groundHeight, left + GROUND_WIDTH, height);
+                if (i % 2 == 0) {
+                    lastGround = new Ground(left, height - groundHeight, left + GROUND_WIDTH, height);
+                } else {
+                    lastGround = new Blank(left, height - 1, left + GROUND_WIDTH, height);
+                }
                 groundList.add(lastGround);
             }
         }
@@ -105,7 +127,15 @@ public class GameView extends SurfaceView implements Droid.Callback,
 
             boolean horizontal = !(droid.rect.left >= ground.rect.right || droid.rect.right <= ground.rect.left);
             if (horizontal) {
-                return ground.rect.top - droid.rect.bottom;
+                if (!ground.isSolid()) {
+                    return Integer.MAX_VALUE;
+                }
+                int distanceFromGround = ground.rect.top - droid.rect.bottom;
+                if (distanceFromGround < 0) {
+                    gameOver();
+                    return Integer.MAX_VALUE;
+                }
+                return distanceFromGround;
             }
         }
 
@@ -139,6 +169,23 @@ public class GameView extends SurfaceView implements Droid.Callback,
         }
 
         droid.jump(time / MAX_TOUCH_TIME);
+    }
+
+    private void gameOver(){
+        if(isGameOver){
+            return;
+        }
+
+        isGameOver = true;
+
+        droid.shutdown();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                callback.onGameOver();
+            }
+        });
     }
 
     private class DrawThread extends Thread {

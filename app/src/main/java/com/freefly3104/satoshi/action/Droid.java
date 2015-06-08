@@ -10,9 +10,17 @@ import android.graphics.Rect;
  */
 public class Droid {
 
+    private static final int COLLISION_MARGIN_LEFT = 15;
+    private static final int COLLISION_MARGIN_RIGHT = 15;
+
     private static final float GRAVITY = 0.8f;
     private static final float WEIGHT = GRAVITY * 60;
     private float acceleration = 0;
+
+    private final Rect drawRect = new Rect();
+    private static final int BLOCK_SIZE =153;
+    private static final Rect BITMAP_SRC_JUMPING = new Rect(BLOCK_SIZE, 0, BLOCK_SIZE * 2, BLOCK_SIZE);
+    private static final Rect BITMAP_SRC_RUNNING = new Rect(0, 0, BLOCK_SIZE, BLOCK_SIZE);
 
     private final Paint paint = new Paint();
     private Bitmap bitmap;
@@ -25,13 +33,25 @@ public class Droid {
     private Callback callback;
 
     public Droid(Bitmap bitmap, int left, int top, Callback callback){
+
+        int rectLeft = left + COLLISION_MARGIN_LEFT;
+        int rectRight = left + BLOCK_SIZE - COLLISION_MARGIN_RIGHT;
+        this.rect = new Rect(rectLeft, top, rectRight, top + BLOCK_SIZE);
+
         this.bitmap = bitmap;
-        this.rect = new Rect(left, top, bitmap.getWidth(), bitmap.getHeight());
         this.callback = callback;
     }
 
     public void draw(Canvas canvas){
-        canvas.drawBitmap(bitmap, rect.left, rect.top, paint);
+
+        Rect src = BITMAP_SRC_RUNNING;
+        if (acceleration != 0) {
+            src = BITMAP_SRC_JUMPING;
+        }
+
+        drawRect.set(rect);
+        drawRect.left -= COLLISION_MARGIN_LEFT;
+        canvas.drawBitmap(bitmap, src, drawRect, paint);
     }
 
     public void jump(float power){
@@ -47,5 +67,9 @@ public class Droid {
             acceleration = -distanceFromGround;
         }
         rect.offset(0, -Math.round(acceleration));
+    }
+
+    public void shutdown(){
+        acceleration = 0;
     }
 }
