@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -14,9 +15,11 @@ import java.util.List;
 import java.util.Random;
 import android.os.Handler;
 
-
 public class GameView extends SurfaceView implements Droid.Callback,
         SurfaceHolder.Callback {
+
+    private static final float POWER_GAUGE_HEIGHT = 30;
+    private static final Paint PAINT_POWER_GAUGE = new Paint();
 
     private static final int START_GROUND_HEIGHT = 50;
     private static final int GROUND_MOVE_TO_LEFT = 10;
@@ -40,6 +43,11 @@ public class GameView extends SurfaceView implements Droid.Callback,
 
     private final Random rand = new Random();
 
+    // staticイニシャライザ  クラスロード時に一度だけ実行する処理
+    static{
+        PAINT_POWER_GAUGE.setColor(Color.RED);
+    }
+
     public interface Callback {
         public void onGameOver();
     }
@@ -53,8 +61,6 @@ public class GameView extends SurfaceView implements Droid.Callback,
     private final Handler handler;
 
     private boolean isGameOver;
-
-
 
 
     public GameView(Context context) {
@@ -111,6 +117,11 @@ public class GameView extends SurfaceView implements Droid.Callback,
         droid.move();
 
         droid.draw(canvas);
+
+        if (touchDownStartTime > 0) {
+            float elapseTime = System.currentTimeMillis() - touchDownStartTime;
+            canvas.drawRect(0,0,width * (elapseTime / MAX_TOUCH_TIME), POWER_GAUGE_HEIGHT,PAINT_POWER_GAUGE);
+        }
     }
 
     @Override

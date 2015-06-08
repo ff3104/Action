@@ -1,10 +1,10 @@
 package com.freefly3104.satoshi.action;
 
-import android.support.v7.app.ActionBarActivity;
+import android.app.Activity;
 import android.os.Bundle;
 import android.widget.Toast;
 
-public class MainActivity extends ActionBarActivity implements GameView.Callback{
+public class MainActivity extends Activity implements GameView.Callback{
 
     private GameView gameView;
 
@@ -16,6 +16,18 @@ public class MainActivity extends ActionBarActivity implements GameView.Callback
         gameView.setCallback(this);
         setContentView(gameView);
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        gameView.startDrawThread();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        gameView.stopDrawThread();
     }
 
     @Override
